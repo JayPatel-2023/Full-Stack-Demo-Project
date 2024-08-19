@@ -1,12 +1,13 @@
 import express from "express";
+import cors from "cors"; // Cross-Origin Resource Sharing (allow cross-origin requests)
 
 const app = express();
 
-app.get('/', (req, res) => {
+app.get('/api/v1', (req, res) => {
     res.send('Hello World!');
 });
 
-app.get('/jokes', (req, res) => {
+app.get('/api/v1/jokes', (req, res) => {
      const jokes = [
             {
                 id : 1,
