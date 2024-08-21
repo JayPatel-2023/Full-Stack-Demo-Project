@@ -36,51 +36,39 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  List<JokesModel> _jokes = [];
+  late Future<List<JokesModel>> _jokesFuture;
 
-  void _incrementCounter() async {
-    await fetchData();
-    setState(() {
-      _counter++;
-    });
-
-    
+  @override
+  void initState() {
+    super.initState();
+    _jokesFuture = fetchData();
   }
 
-  Future<void> fetchData() async {
+  Future<List<JokesModel>> fetchData() async {
     try {
       final dio = Dio();
-      final response =
-          await dio.get('https://full-stack-demo-project.onrender.com/jokes');
+      final response = await dio.get('https://full-stack-demo-project.onrender.com/api/v1/jokes');
 
       log(response.statusMessage.toString());
 
       if (response.statusCode == 200) {
-        log("data fetched successfully {${response.data..runtimeType}}");
-        final List<dynamic> jsonData = jsonDecode(response.data);
+        final List<dynamic> jsonData = response.data;
         final List<JokesModel> data = jsonData.map((item) => JokesModel.fromJson(item)).toList();
-        //_jokes = response.data;
-        // String jokes = '';
 
-        // for (var item in data) {
-        //   jokes += 'Title: ${item['title']}\nPunchline: ${item['punchline']}\n\n\n\n';
-        // }
-
-        setState(() {
-         // _jokes = jokes; // Update the state with fetched jokes
-         _jokes = data;
-        });
+        return data;
       } else {
         throw Exception('Failed to load data');
       }
     } catch (e) {
       log('Failed to fetch data: $e');
+      throw Exception('Failed to fetch data: $e');
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
   }
 
   @override
@@ -90,29 +78,37 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              "Ram",
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-
-            for(var item in _jokes)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Title: ${item.title}\nPunchline: ${item.punchline}", // Display the fetched jokes here
-                style: Theme.of(context).textTheme.bodyLarge,
-                textAlign: TextAlign.center,
+      body: FutureBuilder<List<JokesModel>>(
+        future: _jokesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator()); // Show a loading indicator while fetching data
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}')); // Show error message if fetching fails
+          } else if (snapshot.hasData) {
+            final jokes = snapshot.data!;
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text("Ram"),
+                  Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+                  for (var item in jokes)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Title: ${item.title}\nPunchline: ${item.punchline}",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ],
-        ),
+            );
+          } else {
+            return const Center(child: Text('No data available')); // Show if no data is returned
+          }
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
