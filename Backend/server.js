@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors"; // Cross-Origin Resource Sharing (allow cross-origin requests)
+//import cors from "cors"; // Cross-Origin Resource Sharing (allow cross-origin requests)
 
 const app = express();
 
